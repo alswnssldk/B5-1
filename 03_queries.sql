@@ -3,6 +3,7 @@
 
 PRAGMA foreign_keys = ON;
 
+-- SERCH
 -- Q01. 전체 학생 조회
 SELECT * FROM student;
 
@@ -19,6 +20,8 @@ SELECT * FROM score
 ORDER BY score DESC
 LIMIT 5;
 
+
+-- JOIN
 -- Q05. 과목과 담당 교사 조회 INNER JOIN
 SELECT su.subject_name, t.name AS teacher_name
 FROM subject su
@@ -40,6 +43,9 @@ SELECT st.name, sc.score
 FROM student st
 LEFT JOIN score sc ON st.student_id = sc.student_id;
 
+
+
+
 -- Q09. 학생별 시험 응시 횟수 COUNT
 SELECT st.name, COUNT(sc.score_id) AS test_count
 FROM student st
@@ -58,10 +64,14 @@ FROM student st
 INNER JOIN score sc ON st.student_id = sc.student_id
 GROUP BY st.grade;
 
+
+
 -- Q12. 전체 평균보다 높은 점수 조회 서브쿼리
 SELECT *
 FROM score
 WHERE score > (SELECT AVG(score) FROM score);
+
+
 
 -- Q13. 학생 이름 수정 UPDATE
 UPDATE student
@@ -79,6 +89,9 @@ WHERE student_id = 99;
 
 SELECT * FROM student
 WHERE student_id = 99;
+
+
+
 
 -- Q15. 점수 검색용 인덱스 생성
 CREATE INDEX IF NOT EXISTS idx_score_score
