@@ -73,8 +73,6 @@ B5-1/
 | `subject` | 과목 정보를 저장하고 담당 교사와 연결한다. |
 | `score` | 학생별 과목 점수 기록을 저장한다. |
 
----
-
 ### 5.2 테이블별 컬럼 설명
 
 #### `student`
@@ -114,33 +112,11 @@ B5-1/
 
 ## 6. 테이블 관계 설명
 
-### 6.1 1:N 관계 목록
-
 | 부모 테이블 | 자식 테이블 | 관계 | 설명 |
 |---|---|---|---|
 | `teacher` | `subject` | `1:N` | 교사 1명은 여러 과목을 담당할 수 있다. |
 | `student` | `score` | `1:N` | 학생 1명은 여러 성적 기록을 가질 수 있다. |
 | `subject` | `score` | `1:N` | 과목 1개는 여러 학생의 성적 기록을 가질 수 있다. |
-
-### 6.2 PK와 FK 설명
-
-PK는 각 테이블의 행을 고유하게 식별하기 위해 사용하였다.
-
-예를 들어 `student` 테이블에서는 `student_id`가 PK이다.
-
-```sql
-student_id INTEGER PRIMARY KEY
-```
-
-FK는 다른 테이블의 PK를 참조하여 테이블 사이의 관계를 연결하기 위해 사용하였다.
-
-예를 들어 `score` 테이블의 `student_id`는 `student` 테이블의 `student_id`를 참조한다.
-
-```sql
-FOREIGN KEY (student_id) REFERENCES student(student_id)
-```
-
-이 구조 덕분에 존재하지 않는 학생 ID로 성적 데이터를 입력하는 것을 막을 수 있다.
 
 ---
 
@@ -153,7 +129,7 @@ FOREIGN KEY (student_id) REFERENCES student(student_id)
 | `FOREIGN KEY` | `score.student_id` | 성적 기록이 실제 존재하는 학생과 연결되도록 하기 위해 사용 |
 | `FOREIGN KEY` | `score.subject_id` | 성적 기록이 실제 존재하는 과목과 연결되도록 하기 위해 사용 |
 | `NOT NULL` | 각 테이블의 주요 컬럼 | 반드시 입력되어야 하는 값이기 때문에 사용 |
-| `UNIQUE` | `student.name`, `teacher.name`, `subject.subject_name` | 같은 이름 또는 과목명이 중복되지 않도록 하기 위해 사용 |
+| `UNIQUE` | `student.name`, `teacher.name`, `subject.subject_name` | 중복을 막기 위해 사용 |
 | `CHECK` | `score.score` | 점수가 0점 이상 100점 이하만 입력되도록 제한하기 위해 사용 |
 
 ---
@@ -169,7 +145,7 @@ FOREIGN KEY (student_id) REFERENCES student(student_id)
 | `subject` | 10행 |
 | `score` | 20행 |
 
-데이터 입력 시 FK 관계를 만족시키기 위해 부모 테이블 데이터를 먼저 입력한 후, 자식 테이블 데이터를 입력하였다.
+데이터 입력은 FK 관계를 고려하여 부모 테이블을 먼저 입력하고, 자식 테이블을 나중에 입력하였다.
 
 입력 순서:
 
@@ -179,8 +155,6 @@ FOREIGN KEY (student_id) REFERENCES student(student_id)
 3. subject
 4. score
 ```
-
-`subject` 테이블은 `teacher`를 참조하고, `score` 테이블은 `student`와 `subject`를 참조한다. 따라서 참조 대상이 되는 부모 데이터가 먼저 존재해야 한다.
 
 ---
 
@@ -235,7 +209,7 @@ FOREIGN KEY (student_id) REFERENCES student(student_id)
 
 인덱스 적용 이유:
 
-> 점수 기준으로 높은 점수 조회, 평균 이상 점수 조회, 정렬을 수행할 가능성이 있기 때문에 `score.score` 컬럼에 인덱스를 생성하였다.
+> 점수 기준 조회와 정렬을 수행할 수 있기 때문에 `score.score` 컬럼에 인덱스를 생성하였다.
 
 ---
 
@@ -264,9 +238,9 @@ results/
 
 ---
 
-## 11. 주요 쿼리 상세 설명
+## 11. 주요 쿼리 설명
 
-가장 복잡했던 쿼리는 Q07이다.
+가장 핵심적인 JOIN 쿼리는 Q07이다.
 
 ```sql
 SELECT st.name, su.subject_name, sc.score
@@ -275,62 +249,27 @@ INNER JOIN student st ON sc.student_id = st.student_id
 INNER JOIN subject su ON sc.subject_id = su.subject_id;
 ```
 
-### 쿼리 목적
-
-성적 기록 테이블에는 `student_id`, `subject_id`만 저장되어 있기 때문에 학생 이름과 과목명을 바로 확인하기 어렵다.
-
-Q07은 `score`, `student`, `subject` 테이블을 JOIN하여 학생 이름, 과목명, 점수를 한 번에 조회하기 위한 쿼리이다.
-
-### 동작 과정
-
-1. `score` 테이블에서 성적 기록을 가져온다.
-2. `score.student_id`와 `student.student_id`를 기준으로 학생 정보를 연결한다.
-3. `score.subject_id`와 `subject.subject_id`를 기준으로 과목 정보를 연결한다.
-4. 최종적으로 학생 이름, 과목명, 점수를 조회한다.
-
-### 실행 결과
-
-![주요 쿼리 결과](./results/q07.png)
+이 쿼리는 `score` 테이블에 저장된 `student_id`, `subject_id`를 각각 `student`, `subject` 테이블과 연결하여 학생 이름, 과목명, 점수를 함께 조회한다.
 
 ---
 
-## 12. INNER JOIN과 LEFT JOIN 차이
+## 12. 주요 개념 정리
 
-### INNER JOIN
+### 12.1 PK와 FK
+
+PK는 각 테이블의 행을 고유하게 식별하기 위해 사용한다.
+
+FK는 다른 테이블의 PK를 참조하여 테이블 사이의 관계를 연결하기 위해 사용한다.
+
+예를 들어 `score.student_id`는 `student.student_id`를 참조하기 때문에 존재하지 않는 학생 ID로 성적 데이터를 입력하는 것을 막을 수 있다.
+
+### 12.2 INNER JOIN과 LEFT JOIN
 
 `INNER JOIN`은 양쪽 테이블에 모두 연결되는 데이터만 조회한다.
 
-예시:
-
-```sql
-SELECT st.name, sc.score
-FROM score sc
-INNER JOIN student st ON sc.student_id = st.student_id;
-```
-
-설명:
-
-> `score` 테이블에 존재하는 성적 기록과 연결된 학생 정보만 조회된다. 즉, 성적 기록이 있는 학생의 점수 데이터를 확인할 때 사용한다.
-
-### LEFT JOIN
-
 `LEFT JOIN`은 왼쪽 테이블의 데이터는 모두 보여주고, 오른쪽 테이블에 연결되는 데이터가 없으면 NULL로 표시한다.
 
-예시:
-
-```sql
-SELECT st.name, sc.score
-FROM student st
-LEFT JOIN score sc ON st.student_id = sc.student_id;
-```
-
-설명:
-
-> `student` 테이블을 기준으로 모든 학생을 조회하고, 성적 기록이 있으면 점수를 함께 보여준다. 성적 기록이 없는 학생이 있다면 점수는 NULL로 표시된다.
-
----
-
-## 13. GROUP BY와 집계 함수 설명
+### 12.3 GROUP BY와 집계 함수
 
 `GROUP BY`는 특정 컬럼을 기준으로 데이터를 묶고, `COUNT`, `SUM`, `AVG` 같은 집계 함수를 사용하여 통계 결과를 구할 때 사용한다.
 
@@ -340,58 +279,39 @@ LEFT JOIN score sc ON st.student_id = sc.student_id;
 | `SUM` | 합계 계산 | 학년별 총점 |
 | `AVG` | 평균 계산 | 과목별 평균 점수 |
 
-예를 들어 Q10은 과목별로 점수 데이터를 묶고, 각 과목의 평균 점수를 계산한다.
-
-```sql
-SELECT su.subject_name, AVG(sc.score) AS avg_score
-FROM subject su
-INNER JOIN score sc ON su.subject_id = sc.subject_id
-GROUP BY su.subject_id, su.subject_name;
-```
-
 ---
 
-## 14. FK 제약조건 테스트
+## 13. FK 제약조건 확인
 
 존재하지 않는 부모 데이터를 참조하는 INSERT를 시도하면 FK 제약조건에 의해 입력이 실패한다.
-
-### 테스트 쿼리
 
 ```sql
 INSERT INTO score VALUES (999, 999, 1, 80, '2026-05-20');
 ```
 
-위 쿼리는 `student_id = 999`인 학생이 `student` 테이블에 없기 때문에 실패해야 한다.
-
-### 결과
+위 쿼리는 `student_id = 999`인 학생이 `student` 테이블에 없기 때문에 실패한다.
 
 ```text
 FOREIGN KEY constraint failed
 ```
 
-### 설명
-
-> 존재하지 않는 학생 ID를 `score` 테이블에서 참조하려고 했기 때문에 FK 제약조건에 의해 INSERT가 실패하였다. 이를 통해 데이터베이스가 잘못된 관계의 데이터 입력을 막고, 데이터 무결성을 지킨다는 것을 확인할 수 있었다.
+이를 통해 잘못된 관계의 데이터 입력이 막히고, 데이터 무결성이 지켜지는 것을 확인할 수 있다.
 
 ---
 
-## 15. 엑셀과 데이터베이스의 차이
+## 14. 엑셀과 데이터베이스의 차이
 
 엑셀은 하나의 표 안에 데이터를 직접 입력하고 관리하는 방식에 가깝다. 반면 데이터베이스는 데이터를 여러 테이블로 나누어 저장하고, PK와 FK를 통해 테이블 사이의 관계를 명확하게 표현할 수 있다.
 
 예를 들어 학생 이름, 학년, 과목명, 교사명, 점수를 하나의 표에 모두 넣으면 같은 학생 정보나 교사 정보가 여러 번 반복된다. 하지만 데이터베이스에서는 `student`, `teacher`, `subject`, `score` 테이블로 분리하고 필요한 경우 JOIN으로 다시 연결할 수 있다.
 
-또한 데이터베이스는 제약조건을 통해 잘못된 데이터 입력을 막을 수 있고, JOIN과 GROUP BY를 사용하여 여러 테이블의 데이터를 연결하거나 집계할 수 있다.
-
 ---
 
-## 16. 어려웠던 점과 해결 방법
+## 15. 어려웠던 점과 해결 방법
 
 ### 어려웠던 점
 
 처음에는 학생, 과목, 교사, 점수를 하나의 테이블에 모두 넣어도 된다고 생각할 수 있다. 하지만 그렇게 하면 같은 학생 정보, 교사 정보, 과목 정보가 여러 번 반복되어 데이터 중복이 발생한다.
-
-예를 들어 한 학생이 여러 과목 시험을 보면 학생 이름과 학년이 성적 기록마다 반복되고, 한 교사가 여러 과목을 담당하면 교사 이름도 반복된다.
 
 ### 해결 방법
 
@@ -399,78 +319,9 @@ FOREIGN KEY constraint failed
 
 그리고 `subject.teacher_id`, `score.student_id`, `score.subject_id`를 FK로 설정하여 테이블 사이의 관계를 표현하였다.
 
-이렇게 분리하면 중복을 줄일 수 있고, 필요한 정보는 JOIN을 사용하여 다시 연결해서 조회할 수 있다.
-
 ---
 
-## 17. 보너스 과제 수행 내용
-
-### 17.1 JOIN과 서브쿼리 비교
-
-같은 요구사항을 JOIN과 서브쿼리 두 가지 방식으로 작성하였다.
-
-요구사항:
-
-> 전체 평균보다 높은 점수를 받은 학생 이름과 점수를 조회한다.
-
-#### JOIN 방식
-
-```sql
-SELECT st.name, sc.score
-FROM score sc
-INNER JOIN student st ON sc.student_id = st.student_id
-WHERE sc.score > (
-    SELECT AVG(score)
-    FROM score
-);
-```
-
-#### 서브쿼리 방식
-
-```sql
-SELECT *
-FROM score
-WHERE score > (
-    SELECT AVG(score)
-    FROM score
-);
-```
-
-#### 차이점
-
-> 서브쿼리 방식은 평균보다 높은 성적 기록 자체를 조회하기에 간단하다. JOIN 방식은 여기에 학생 테이블을 연결하여 학생 이름까지 함께 확인할 수 있다는 장점이 있다.
-
----
-
-### 17.2 FK 오류 발생 및 해결
-
-존재하지 않는 FK 값을 입력했을 때 오류가 발생하는 것을 확인하였다.
-
-```sql
-INSERT INTO score VALUES (999, 999, 1, 80, '2026-05-20');
-```
-
-해결 방법:
-
-> `score` 테이블에 데이터를 넣기 전에 `student` 테이블에 해당 학생이 먼저 존재해야 한다. 따라서 존재하는 `student_id`를 사용하거나, 필요한 학생 데이터를 `student` 테이블에 먼저 INSERT해야 한다.
-
----
-
-### 17.3 미니 리포트
-
-본 데이터베이스를 통해 확인할 수 있는 핵심 지표 3가지는 다음과 같다.
-
-| 지표 | 설명 | 관련 쿼리 |
-|---|---|---|
-| 학생별 시험 응시 횟수 | 학생별로 몇 개의 성적 기록이 있는지 확인한다. | Q09 |
-| 과목별 평균 점수 | 과목별 평균 점수를 확인하여 과목별 성취도를 비교한다. | Q10 |
-| 학년별 총점 | 학년별 전체 점수 합계를 확인한다. | Q11 |
-
----
-
-## 18. 평가항목 체크리스트
-
-### 항목 1. 결과물 완성 여부
+## 16. 평가항목 체크리스트
 
 - [x] 최소 4개 이상의 테이블을 생성하였다.
 - [x] 각 테이블에 PK를 정의하였다.
@@ -478,42 +329,12 @@ INSERT INTO score VALUES (999, 999, 1, 80, '2026-05-20');
 - [x] 각 테이블에 최소 10행 이상의 샘플 데이터를 입력하였다.
 - [x] 기본 조회 4개, 조인 4개, 집계 3개, 서브쿼리 1개, 수정/삭제 2개, 인덱스 1개를 포함하여 총 15개 이상의 쿼리를 작성하였다.
 - [x] 각 쿼리의 실행 결과를 스크린샷 또는 텍스트로 첨부하였다.
-
-### 항목 2. 설계 설명 가능 여부
-
-- [x] 테이블을 왜 나누었는지 설명할 수 있다.
-- [x] 각 테이블의 역할을 설명할 수 있다.
-- [x] FK로 연결된 1:N 관계가 실제 도메인에서 어떤 의미인지 설명할 수 있다.
-- [x] 컬럼 타입을 왜 그렇게 선택했는지 설명할 수 있다.
-- [x] 인덱스를 어떤 컬럼에 걸었고, 왜 필요한지 설명할 수 있다.
-
-### 항목 3. DB 개념 이해 여부
-
-- [x] 데이터베이스와 엑셀의 차이를 설명할 수 있다.
-- [x] PK와 FK의 역할을 구분하여 설명할 수 있다.
-- [x] 1:N 관계가 데이터를 어떻게 연결하는지 설명할 수 있다.
-- [x] INNER JOIN과 LEFT JOIN의 차이를 실행 결과를 통해 설명할 수 있다.
-- [x] GROUP BY와 COUNT, SUM, AVG의 동작 방식을 설명할 수 있다.
-
-### 항목 4. 문제 해결 과정 설명 여부
-
-- [x] 작성한 쿼리 중 가장 복잡한 쿼리를 선택하였다.
-- [x] 해당 쿼리를 어떻게 작성했는지 단계별로 설명할 수 있다.
-- [x] 미션 수행 중 어려웠던 부분을 정리하였다.
-- [x] 어려웠던 부분을 어떻게 해결했는지 구체적으로 작성하였다.
-
-### 항목 5. 보너스 과제
-
-- [x] JOIN과 서브쿼리 두 방식으로 같은 요구사항을 해결하였다.
-- [x] FK 오류를 일부러 발생시키고, 왜 막히는지 기록하였다.
-- [x] 핵심 지표 3개를 정의하고 SQL로 작성하였다.
+- [x] DB와 엑셀의 차이, PK/FK, JOIN, GROUP BY, 인덱스의 역할을 설명할 수 있다.
 
 ---
 
-## 19. 최종 정리
+## 17. 최종 정리
 
 이번 미션을 통해 테이블을 나누는 이유, PK와 FK를 통한 관계 설정, JOIN을 통한 데이터 연결, GROUP BY를 통한 집계 방식, 그리고 인덱스의 필요성을 학습하였다.
-
-단순히 SQL 문법을 작성하는 것에서 끝나는 것이 아니라, 실제 도메인을 기준으로 데이터를 어떻게 나누고 연결해야 하는지 이해하는 것이 핵심이었다.
 
 이번 프로젝트에서는 학급 성적 관리 시스템을 기준으로 `student`, `teacher`, `subject`, `score` 테이블을 설계하였다. 이를 통해 학생, 교사, 과목, 성적 기록을 분리해서 관리하고, 필요한 경우 SQL JOIN으로 다시 연결하여 조회할 수 있음을 확인하였다.
